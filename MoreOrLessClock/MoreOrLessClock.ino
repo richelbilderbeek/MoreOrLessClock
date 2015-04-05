@@ -85,7 +85,12 @@ void loop()
 {
   for (int i=0; i!=10; ++i)  
   {
-    ShowBinary(~DigitToBinary(i));
+    ShowBinary(
+      ~DigitToBinary((i+0) % 10),
+      ~DigitToBinary((i+1) % 10),
+      ~DigitToBinary((i+2) % 10),
+      ~DigitToBinary((i+3) % 10)
+    );
     delay(1000);
   }
 }
@@ -108,13 +113,16 @@ int DigitToBinary(const int digit)
 
 }
 
-void ShowBinary(const int getal)
+void ShowBinary(const int a, const int b, const int c)
 {
   // Stuur de data naar het shift register
-  shiftOut(datapin, clockpin, LSBFIRST, getal);
+  shiftOut(datapin, clockpin, LSBFIRST, a);
+  shiftOut(datapin, clockpin, LSBFIRST, b);
+  shiftOut(datapin, clockpin, LSBFIRST, c);
 
   // Zet de latch aan en uit, zodat de outputs aan gaan
   digitalWrite(latchpin, HIGH);
   digitalWrite(latchpin, LOW);
+
 }
 
