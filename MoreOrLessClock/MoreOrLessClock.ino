@@ -211,7 +211,6 @@ void setup()
 
 void loop()
 {
-  //int last_sec = -1; //The previous second, used to detect a change in time, to be sent to serial monitor
   while (1)
   {
 
@@ -227,7 +226,7 @@ void loop()
 
     //Change the time
     {
-      switch( (rand() >> 4) % 4)
+      switch( (rand() >> 4) % 2)
       {
         case 0: adjustTime( 1); break;
         case 1: adjustTime(-1); break;
@@ -240,34 +239,15 @@ void loop()
     const int m = minute();
     const int h = hour();
     
-    
-    //if (last_sec == s) 
-    //{
-    //  continue;
-    //}
-
-    //last_sec = s;
     ShowTime(s,m,h);
 
-    //if (sensors_state == state_right_sensor_pressed) 
+    //Show tme in serial monitor
     { 
       const String time_now = String(h) + ":" + String(m) + ":" + String(s);
       Serial.println(time_now);
       delay(100);
     }
   }
-  /*
-  for (int i=0; i!=10; ++i)  
-  {
-    ShowBinary(
-      ~DigitToBinary((i+0) % 10),
-      ~DigitToBinary((i+1) % 10),
-      ~DigitToBinary((i+2) % 10),
-      ~DigitToBinary((i+3) % 10)
-    );
-    delay(1000);
-  }
-  */
 }
 
 void ShowTime(const int secs, const int mins, const int hours)
