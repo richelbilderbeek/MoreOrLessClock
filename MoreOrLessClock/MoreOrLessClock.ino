@@ -120,7 +120,8 @@ const int error_pin = 13;
 
 enum ClockMode { hours_and_minutes, minutes_and_seconds};
 
-const ClockMode clock_mode = minutes_and_seconds;
+//const ClockMode clock_mode = minutes_and_seconds;
+const ClockMode clock_mode = hours_and_minutes;
 
 void OnError(const String& error_message)
 
@@ -200,13 +201,20 @@ void setup()
   pinMode(latch_pin, OUTPUT);
   pinMode(clock_pin, OUTPUT);  
   pinMode(error_pin, OUTPUT);  
+  Serial.begin(9600); //Cannot be used: chip is used stand-alone
+  #ifndef NDEBUG
+  Serial.println("MoreOrLessClock v. 1.0 (debug version)");
+  #else //NDEBUG
+  Serial.println("MoreOrLessClock v. 1.0 (release version)");
+  #endif //NDEBUG
 }
 
 void loop()
 {
-  int last_sec = -1; //The previous second, used to detect a change in time, to be sent to serial monitor
+  //int last_sec = -1; //The previous second, used to detect a change in time, to be sent to serial monitor
   while (1)
   {
+
     //Respond to touches
     //const int sensors_state = GetSensors();
     //if (sensors_state == state_left_sensor_pressed) { SetTime(); delay(100); }
@@ -216,17 +224,29 @@ void loop()
       delay(100);
       SetTimeFromSerial();  
     }
+
+    //Change the time
+    {
+      switch( (rand() >> 4) % 4)
+      {
+        case 0: adjustTime( 1); break;
+        case 1: adjustTime(-1); break;
+        default: break;
+      }
+    }
+    
     //Show the time
     const int s = second();
     const int m = minute();
     const int h = hour();
+    
+    
+    //if (last_sec == s) 
+    //{
+    //  continue;
+    //}
 
-    if (last_sec == s) 
-    {
-      continue;
-    }
-
-    last_sec = s;
+    //last_sec = s;
     ShowTime(s,m,h);
 
     //if (sensors_state == state_right_sensor_pressed) 
@@ -267,7 +287,7 @@ void ShowTime(const int secs, const int mins, const int hours)
         ~DigitToBinary(hours / 10),
         ~DigitToBinary(hours % 10),
         ~DigitToBinary(mins / 10),
-        ~DigitToBinary(mins / 10)
+        ~DigitToBinary(mins % 10)
       );
     break;
     case minutes_and_seconds:
