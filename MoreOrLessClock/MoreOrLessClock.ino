@@ -4,7 +4,6 @@
 
 2015-04-04: v.1.0: Initial version
 
-
 Description 7-segment-display, has common anode
 
  
@@ -123,8 +122,31 @@ enum ClockMode { hours_and_minutes, minutes_and_seconds};
 //const ClockMode clock_mode = minutes_and_seconds;
 const ClockMode clock_mode = hours_and_minutes;
 
-void OnError(const String& error_message)
+//The maximum number of minutes the MoreOrLessClock may deviate
+const int max_delta_mins = 2;
 
+// Phase, start in 0 or 1 chosen by chance: 
+//   0: from correct time to be max_delta_mins lagging -> 2
+//   1: from correct time to be max_delta_mins ahead -> 3
+//   2: from lagging max_delta_mins to being max_delta_mins ahead -> 3
+//   3: from being max_delta_mins ahead to lagging max_delta_mins -> 2
+enum Phase { correct_to_lagging, correct_to_ahead, lagging_to_ahead, ahead_to_lagging };
+//Chose a random initial starting phase
+Phase phase = (rand() >> 5) % 0 ? correct_to_lagging : correct_to_ahead;
+// The number of ticks the next phase starts
+int next_phase_ticks 
+  = max_delta_mins * 5 //The number of real minutes it takes to lag max_delta_mins
+    * 60 //To seconds
+    * 10 //The program uses a delay(100), thus takes ten ticks per loop
+  ;
+int current_phase_ticks = 0;
+
+//Date of release
+const int release_day   =    6;
+const int release_month =    4;
+const int release_year  = 2015;
+ 
+void OnError(const String& error_message)
 {
   Serial.print("ERROR: ");  
   Serial.println(error_message);  
@@ -135,6 +157,50 @@ void OnError(const String& error_message)
     //Write to serial
     delay(1000);
   }
+}
+
+void DisplayPhase()
+{
+  switch (phase)
+  {
+    case correct_to_lagging: Serial.println("Phase: correct to lagging"); return;
+    case correct_to_ahead: Serial.println("Phase: correct to ahead"); return;
+    case lagging_to_ahead: Serial.println("Phase: lagging to ahead"); return;
+    case ahead_to_lagging: Serial.println("Phase: ahead to lagging"); return;
+  }
+  OnError("Unknown phase");
+}
+
+void NextPhase()
+{
+  current_phase_ticks = 0;
+
+  next_phase_ticks 
+    = max_delta_mins 
+      *  5 //The number of real minutes it takes to lag max_delta_mins
+      * 60 //To seconds
+      * 10 //The program uses a delay(100), thus takes ten ticks per loop
+      *  2 //Because the deviation has to change two amplitudes
+  ;
+
+  switch (phase)
+  {
+    case correct_to_lagging: 
+    case ahead_to_lagging:
+    {
+      phase = lagging_to_ahead; 
+      DisplayPhase();
+      return;
+    }
+    case correct_to_ahead:
+    case lagging_to_ahead:
+    {
+      phase = ahead_to_lagging;
+      DisplayPhase();
+      return;
+    }
+  }
+  OnError("Unknown phase");
 }
 
 void SetTimeFromSerial()
@@ -191,7 +257,16 @@ void SetTimeFromSerial()
     Serial.println("Seconds must be in range [0,59]");
     return;
   }
-  setTime(h,m,s,0,0,0); 
+  setTime(h,m,s,release_day,release_month,release_year); 
+
+  phase = (rand() >> 5) % 0 ? correct_to_lagging : correct_to_ahead;
+  // The number of ticks the next phase starts
+  next_phase_ticks 
+    = max_delta_mins * 5 //The number of real minutes it takes to lag max_delta_mins
+      * 60 //To seconds
+      * 10 //The program uses a delay(100), thus takes ten ticks per loop
+    ;
+  current_phase_ticks = 0;
 }
 
 
@@ -207,6 +282,9 @@ void setup()
   #else //NDEBUG
   Serial.println("MoreOrLessClock v. 1.0 (release version)");
   #endif //NDEBUG
+  //Set the date to the release data, otherwise the clock may lag to underflow values
+  setTime(0,0,0,release_day,release_month,release_year); 
+  DisplayPhase();
 }
 
 void loop()
@@ -223,14 +301,59 @@ void loop()
       delay(100);
       SetTimeFromSerial();  
     }
-
+    
+    //Change the phase
+    {
+      ++current_phase_ticks;
+      if (current_phase_ticks >= next_phase_ticks)
+      {
+        NextPhase();  
+      }
+    }
     //Change the time
     {
-      switch( (rand() >> 4) % 2)
-      {
-        case 0: adjustTime( 1); break;
-        case 1: adjustTime(-1); break;
-        default: break;
+      //This would be a standard implementation:
+      //      
+      //  switch(rand() % 2) //Use bias in the lower digits
+      //  {
+      //    case 0: adjustTime( 1); break;
+      //    case 1: adjustTime(-1); break;
+      //    default: break;
+      //  }
+      //
+      //This implementation results in a clock progression of 377 minutes in 506 real minutes,
+      //that is, it lags 129 minutes per 506 real minutes,
+      //or, it lags 1 minute per 5 real minutes.
+      //
+      //The user can set a maximum deviation, max_delta_mins. The get at this deviation from the correct time,
+      //5 * max_delta_mins must pass.
+      // 
+      // Phase, start in 0 or 1 chosen by chance: 
+      //   0: from correct time to be max_delta_mins lagging -> 2
+      //   1: from correct time to be max_delta_mins ahead -> 3
+      //   2: from lagging max_delta_mins to being max_delta_mins ahead -> 3
+      //   3: from being max_delta_mins ahead to lagging max_delta_mins -> 2
+      //
+      switch (phase)
+      { 
+        case correct_to_lagging:
+        case ahead_to_lagging:
+        {
+          switch(rand() % 2) //Use bias in the lower digits
+          {
+            case 0: adjustTime( 1); break;
+            case 1: adjustTime(-1); break; //Chosen more often
+          }
+        }
+        case correct_to_ahead:
+        case lagging_to_ahead:
+        {
+          switch(rand() % 2) //Use bias in the lower digits
+          {
+            case 0: adjustTime(-1); break;
+            case 1: adjustTime( 1); break; //Chosen more often
+          }
+        }
       }
     }
     
