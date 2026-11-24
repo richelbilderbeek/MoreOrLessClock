@@ -1,6 +1,6 @@
 [project]
 site_name = "MoreOrLessClock"
-site_url = "https://richelbilderbeek.github.io/moreorlessclock/"
+site_url = "https://richelbilderbeek.github.io/MoreOrLessClock/"
 repo_url = "https://github.com/richelbilderbeek/MoreOrLessClock"
 edit_uri = "blob/master/docs/"
 
