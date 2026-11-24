@@ -1,11 +1,14 @@
 # MoreOrLessClock
 
-The MoreOrLessClock is [one of my machines](https://github.com/richelbilderbeek/Machines) that uses Arduino.
-It's a clock that displays more or less the correct time.
+[![Create the Zensical website](https://github.com/richelbilderbeek/MoreOrLessClock/actions/workflows/create_zensical_website.yaml/badge.svg?branch=master)](https://github.com/richelbilderbeek/MoreOrLessClock/actions/workflows/create_zensical_website.yaml)
 
-You can download all files here, or view the [FAQ](FAQ.md).
+- [Go to the nicely rendered site](https://richelbilderbeek.github.io/moreorlessclock/)
 
+The source of the website is in the [`docs`](docs) folder,
+with the start page at [`docs/README.md`](docs/README.md).
 
-![Prototype from left](MoreOrLessClockPrototypeLeft.jpg)
-![Prototype from top](MoreOrLessClockPrototypeTop.jpg)
-![Prototype from right](MoreOrLessClockPrototypeRight.jpg)
+To view the website locally, run:
+
+```bash
+./scripts/deploy_zensical_website_locally.sh
+```
